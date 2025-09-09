@@ -1,0 +1,93 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List
+
+app = FastAPI()
+
+# Mock drug interaction data (lowercase keys for matching)
+drug_interactions = {
+    ("aspirin", "ibuprofen"): "Increased risk of bleeding",
+    ("warfarin", "acetaminophen"): "Increased risk of bleeding",
+}
+
+# Mock dosage guidelines by age (mg)
+dosage_guidelines = {
+    "aspirin": {"child": 50, "adult": 300, "elderly": 200},
+    "ibuprofen": {"child": 100, "adult": 400, "elderly": 300},
+}
+
+# Mock alternative drugs
+alternative_drugs = {
+    "aspirin": ["acetaminophen"],
+    "ibuprofen": ["naproxen"],
+}
+
+# Models
+class Prescription(BaseModel):
+    drugs: List[str]
+    age: int
+
+class TextInput(BaseModel):
+    text: str
+
+# Endpoints
+@app.post("/check-interactions")
+def check_interactions(prescription: Prescription):
+    drugs = [drug.lower() for drug in prescription.drugs]
+    interactions = []
+    for i in range(len(drugs)):
+        for j in range(i + 1, len(drugs)):
+            pair = (drugs[i], drugs[j])
+            rev_pair = (drugs[j], drugs[i])
+            if pair in drug_interactions:
+                interactions.append(
+                    f"{prescription.drugs[i]} and {prescription.drugs[j]}: {drug_interactions[pair]}"
+                )
+            elif rev_pair in drug_interactions:
+                interactions.append(
+                    f"{prescription.drugs[i]} and {prescription.drugs[j]}: {drug_interactions[rev_pair]}"
+                )
+    return {"interactions": interactions}
+
+
+@app.post("/recommend-dosage")
+def recommend_dosage(prescription: Prescription):
+    age = prescription.age
+    if age < 18:
+        age_group = "child"
+    elif age > 65:
+        age_group = "elderly"
+    else:
+        age_group = "adult"
+
+    dosages = {}
+    for drug in prescription.drugs:
+        drug_lower = drug.lower()
+        if drug_lower in dosage_guidelines:
+            dosages[drug] = dosage_guidelines[drug_lower][age_group]
+        else:
+            dosages[drug] = "No data available"
+    return {"dosages": dosages}
+
+
+@app.post("/suggest-alternatives")
+def suggest_alternatives(prescription: Prescription):
+    alternatives = {}
+    for drug in prescription.drugs:
+        drug_lower = drug.lower()
+        if drug_lower in alternative_drugs:
+            alternatives[drug] = alternative_drugs[drug_lower]
+        else:
+            alternatives[drug] = ["No alternative found"]
+    return {"alternatives": alternatives}
+
+
+@app.post("/extract-drug-info")
+def extract_drug_info(input: TextInput):
+    # Placeholder logic – replace with actual HuggingFace or Watson model
+    extracted_info = {
+        "drugs": ["aspirin"],
+        "dosages": ["300 mg"],
+        "frequency": ["once daily"]
+    }
+    return extracted_info
