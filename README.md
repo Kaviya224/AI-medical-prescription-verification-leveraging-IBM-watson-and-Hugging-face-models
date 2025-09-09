@@ -1,0 +1,2 @@
+# AI-medical-prescription-verification-leveraging-IBM-watson-and-Hugging-face-models
+This project focuses on building an AI-powered system to verify medical prescriptions by extracting and analyzing drug information using advanced NLP tools. The system leverages Hugging Face transformer models and IBM Watson Natural Language Understanding (NLU) services, integrated into a backend API and a user-friendly frontend.
